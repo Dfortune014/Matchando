@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import Card from "./Card";
@@ -11,6 +11,7 @@ import errorSound from "../assets/sounds/error.mp3";
 import celebrationSound from "../assets/sounds/celebration.mp3";
 import { playSound } from "../utils/soundUtils";
 import wordPairs from "../wordPairs.json";
+
 export interface CardType {
   id: number;
   content: string;
@@ -29,17 +30,15 @@ const MemoryGame = () => {
   const [score, setScore] = useState(100);
   const [showWinMessage, setShowWinMessage] = useState(false);
 
+  const selectedPairs = useMemo(() => shuffle(wordPairs).slice(0, 8), []);
+
   const gameOverAnimation = {
-    initial: { opacity: 0, scale: 0.8 },
-    animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.8 },
+    initial: { opacity: 0, y: -20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 },
   };
 
   const initializeGame = () => {
-    // Shuffle the word pairs and select the first eight pairs
-    const shuffledPairs = shuffle(wordPairs);
-    const selectedPairs = shuffledPairs.slice(0, 8);
-
     const gameCards: CardType[] = [];
     selectedPairs.forEach((pair, index) => {
       gameCards.push({
@@ -121,7 +120,7 @@ const MemoryGame = () => {
       const secondCard = cards.find((card) => card.id === secondId);
 
       if (firstCard && secondCard) {
-        const isMatch = wordPairs.some(
+        const isMatch = selectedPairs.some(
           (pair) =>
             (firstCard.content === pair.spanish &&
               secondCard.content === pair.english) ||
@@ -140,7 +139,7 @@ const MemoryGame = () => {
           );
           setMatches((prev) => {
             const newMatches = prev + 1;
-            if (newMatches === wordPairs.length) {
+            if (newMatches === selectedPairs.length) {
               playSound(celebrationSound);
               setShowWinMessage(true);
               toast("¡Felicitaciones! You've completed the game! 🎉");
@@ -172,7 +171,7 @@ const MemoryGame = () => {
       <div className="max-w-4xl mx-auto">
         <GameHeader
           matches={matches}
-          totalPairs={wordPairs.length}
+          totalPairs={selectedPairs.length}
           timer={timer}
           score={score}
         />
@@ -216,7 +215,7 @@ const MemoryGame = () => {
         <GameFooter
           onRestart={initializeGame}
           matches={matches}
-          totalPairs={wordPairs.length}
+          totalPairs={selectedPairs.length}
         />
       </div>
     </div>

@@ -23,7 +23,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
       transition={{ duration: 0.5 }}
     >
       <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-wider">
-        Language Match
+        Matchando
       </h1>
       <div className="flex justify-center items-center space-x-4 text-xl text-primary-foreground/80">
         <div className="flex items-center">

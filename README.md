@@ -1,84 +1,159 @@
-# Matchando - Memory Game
+# Spanish-English Memory Game
 
-Matchando is a fun and interactive memory game designed to help players improve their language skills by matching words in Spanish and English. The game features a simple and engaging interface, allowing players to test their memory and learn new vocabulary.
+A fun and interactive memory game to learn Spanish and English vocabulary while improving your memory skills.
 
-## Table of Contents
+This project is a web-based memory game that challenges players to match Spanish words with their English translations. Built with React and TypeScript, it features a responsive design, animations, and sound effects to create an engaging learning experience.
 
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Game Rules](#game-rules)
-- [Contributing](#contributing)
-- [License](#license)
+The game presents a grid of cards, each containing either a Spanish word or its English translation. Players must flip the cards and find matching pairs within a time limit. As players progress, they earn points for correct matches and lose points for incorrect ones. The game ends when all pairs are matched or when the time runs out.
 
-## Features
+Key features include:
+- Randomized word pairs for each game session
+- Interactive card flipping with animations
+- Score tracking and timer
+- Sound effects for card flips, matches, and game completion
+- Responsive design for various screen sizes
+- Win and lose conditions with appropriate feedback
 
-- Randomly selects 8 pairs of words from a predefined list for each game.
-- Engaging animations and sound effects for a better user experience.
-- Timer to challenge players and add excitement.
-- Score tracking to encourage improvement.
-- Responsive design for play on various devices.
+## Repository Structure
 
-## Technologies Used
+```
+.
+├── src/
+│   ├── components/
+│   │   ├── Card.tsx
+│   │   ├── GameFooter.tsx
+│   │   ├── GameHeader.tsx
+│   │   └── MemoryGame.tsx
+│   ├── hooks/
+│   │   └── use-mobile.tsx
+│   ├── lib/
+│   │   └── utils.ts
+│   ├── pages/
+│   │   └── Index.tsx
+│   ├── utils/
+│   │   ├── gameUtils.ts
+│   │   └── soundUtils.ts
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── wordPairs.json
+├── eslint.config.js
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
+```
 
-- **Vite**: A fast build tool for modern web applications.
-- **React**: A JavaScript library for building user interfaces.
-- **TypeScript**: A typed superset of JavaScript that compiles to plain JavaScript.
-- **Tailwind CSS**: A utility-first CSS framework for styling.
-- **Framer Motion**: A library for animations in React.
-- **Sonner**: A toast notification library for user feedback.
+Key Files:
+- `src/components/MemoryGame.tsx`: The main game component that manages the game state and logic.
+- `src/components/Card.tsx`: Represents a single card in the memory game.
+- `src/pages/Index.tsx`: The main page component that renders the MemoryGame.
+- `src/App.tsx`: The root component that sets up routing and global providers.
+- `src/wordPairs.json`: Contains the Spanish-English word pairs used in the game.
+- `vite.config.ts`: Configuration file for the Vite build tool.
 
-## Installation
+## Usage Instructions
 
-To get started with the project, follow these steps:
+### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Dfortune014/Matchando.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd Matchando
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-5. Open your web browser and navigate to play the game.
+Prerequisites:
+- Node.js (v14 or later)
+- npm (v6 or later)
 
-## Usage
+To install the project dependencies, run the following command in the project root directory:
 
-Click on the cards to flip them over and reveal the words.
-Try to find matching pairs of words in Spanish and English.
-Keep an eye on the timer and try to match all pairs before time runs out!
-The game will keep track of your score and display it at the end of each round.
+```bash
+npm install
+```
 
-## Contributing
+### Getting Started
 
-Contributions are welcome! If you have suggestions for improvements or new features, feel free to open an issue or submit a pull request.
+To start the development server, run:
 
-1. Fork the repository
-2. Create a new branch for your feature or bug fix
-   ```bash
-   git checkout -b feature/new-feature
-   ```
-3. Make your changes and commit them:
-   ```bash
-   git commit -m "Add some feature"
-   ```
-4. Push your changes to the remote repository:
-   ```bash
-   git push origin feature/new-feature
-   ```
-5. Open a pull request to merge your changes into the main branch.
+```bash
+npm run dev
+```
 
-## License
+This will start the application on `http://localhost:8080`.
 
-This project is licensed under the MIT License.
+### Building for Production
 
-**Enjoy playing Matchando and improving your language skills!**
+To create a production build, run:
+
+```bash
+npm run build
+```
+
+The built files will be available in the `dist` directory.
+
+### Configuration Options
+
+The game can be customized by modifying the following files:
+- `src/wordPairs.json`: Add or modify Spanish-English word pairs.
+- `src/components/MemoryGame.tsx`: Adjust game parameters such as timer duration and scoring.
+
+### Testing & Quality
+
+To run the linter, use:
+
+```bash
+npm run lint
+```
+
+### Troubleshooting
+
+Common issues and solutions:
+
+1. Problem: Cards not flipping when clicked
+   - Error message: None
+   - Diagnostic process:
+     1. Check the browser console for any JavaScript errors
+     2. Verify that the `handleCardClick` function in `MemoryGame.tsx` is being called
+   - Solution: Ensure that the `onClick` prop is correctly passed to the `Card` component
+
+2. Problem: Game not ending when timer reaches zero
+   - Error message: None
+   - Diagnostic process:
+     1. Add console.log statements in the timer useEffect hook in `MemoryGame.tsx`
+     2. Verify that the `setIsGameOver` function is being called when the timer reaches zero
+   - Solution: Check the condition in the timer useEffect hook and ensure it's correctly setting the game over state
+
+3. Problem: Sound effects not playing
+   - Error message: "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   - Diagnostic process:
+     1. Check the browser console for any resource loading errors
+     2. Verify that the sound files are correctly imported in `MemoryGame.tsx`
+   - Solution: Ensure that the sound files are in the correct directory and properly imported
+
+## Data Flow
+
+The Spanish-English Memory Game follows a unidirectional data flow pattern. Here's an overview of how data flows through the application:
+
+1. The game starts in the `MemoryGame` component, which initializes the game state.
+2. Word pairs are loaded from `wordPairs.json` and shuffled to create a random set of cards.
+3. The game state, including card positions, flipped status, and matches, is managed in the `MemoryGame` component.
+4. User interactions (card clicks) trigger the `handleCardClick` function in `MemoryGame`.
+5. Card flips and matches update the game state, which is then passed down to child components.
+6. The `GameHeader` component receives and displays the current score, timer, and match count.
+7. The `Card` components receive their individual states and render accordingly.
+8. The `GameFooter` component receives the game state and provides options to restart the game.
+
+```
+┌─────────────────┐
+│    MemoryGame   │
+│  (Main State)   │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────┴───────┐
+│   Game Logic    │
+│  (handleClick)  │
+└─────────┬───────┘
+          │
+    ┌─────┴─────┐
+    │           │
+    ▼           ▼
+┌─────────┐ ┌─────────┐
+│  Cards  │ │  Header │
+└─────────┘ └─────────┘
+```
+
+Note: The game uses React's state management and prop passing to maintain a single source of truth for the game state.
