@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18 # Specify the Node.js version
+    commands:
+      - echo "Installing dependencies"
+      - npm install --legacy-peer-deps # Add the flag here to handle peer dependency conflicts
+  build:
+    commands:
+      - echo "Building the application"
+      - npm run build # Adjust this command if necessary
+
+artifacts:
+  files:
+    - "**/*" # Specify the files to include in the build artifacts
+  base-directory: "dist" #
