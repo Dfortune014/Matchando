@@ -3,16 +3,43 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18 # Specify the Node.js version
+      nodejs: 18
     commands:
       - echo "Installing dependencies"
-      - npm install --legacy-peer-deps # Add the flag here to handle peer dependency conflicts
+      - npm install --legacy-peer-deps
+
   build:
     commands:
       - echo "Building the application"
-      - npm run build # Adjust this command if necessary
+      - npm run build
 
-artifacts:
-  files:
-    - "**/*" # Specify the files to include in the build artifacts
-  base-directory: "dist" #
+post_build:
+  commands:
+    - echo "Uploading files to S3 bucket 'matchando' with proper Content-Type"
+    - |
+      for file in $(find dist -type f); do
+        case "$file" in
+          *.html)
+            content_type="text/html"
+            ;;
+          *.js)
+            content_type="application/javascript"
+            ;;
+          *.css)
+            content_type="text/css"
+            ;;
+          *.png)
+            content_type="image/png"
+            ;;
+          *.jpg|*.jpeg)
+            content_type="image/jpeg"
+            ;;
+          *.svg)
+            content_type="image/svg+xml"
+            ;;
+          *)
+            content_type="binary/octet-stream"
+            ;;
+        esac
+        aws s3 cp "$file" "s3://matchando/$(basename $file)" --content-type "$content_type" --metadata-directive REPLACE
+      done
