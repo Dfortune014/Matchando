@@ -15,9 +15,11 @@ phases:
 
 post_build:
   commands:
-    - echo "Uploading files to S3 bucket 'matchando' with proper Content-Type"
+    - echo "Uploading files to S3 bucket 'matchando'"
+    - aws s3 cp dist/ s3://matchando/ --recursive --content-type "binary/octet-stream"
+    - echo "Setting proper Content-Type for uploaded files"
     - |
-      for file in $(find dist -type f); do
+      for file in $(aws s3 ls s3://matchando/ --recursive | awk '{print $4}'); do
         case "$file" in
           *.html)
             content_type="text/html"
@@ -41,5 +43,9 @@ post_build:
             content_type="binary/octet-stream"
             ;;
         esac
-        aws s3 cp "$file" "s3://matchando/$(basename $file)" --content-type "$content_type" --metadata-directive REPLACE
+        aws s3 cp "s3://matchando/$file" "s3://matchando/$file" --content-type "$content_type" --metadata-directive REPLACE
       done
+artifacts:
+  files:
+    - "**/*"
+  base-directory: "dist"
