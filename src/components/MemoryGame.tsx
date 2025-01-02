@@ -11,6 +11,15 @@ import errorSound from "../assets/sounds/error.mp3";
 import celebrationSound from "../assets/sounds/celebration.mp3";
 import { playSound } from "../utils/soundUtils";
 import wordPairs from "../wordPairs.json";
+import { 
+  trackGameStart, 
+  trackGameOver, 
+  trackGameWon, 
+  trackCardFlip, 
+  trackCardMatch, 
+  trackIncorrectMatch,
+  trackNewGameClick 
+} from "../utils/analytics";
 
 export interface CardType {
   id: number;
@@ -30,7 +39,8 @@ const MemoryGame = () => {
   const [score, setScore] = useState(100);
   const [showWinMessage, setShowWinMessage] = useState(false);
 
-  const selectedPairs = useMemo(() => shuffle(wordPairs).slice(0, 8), []);
+  const [gameKey, setGameKey] = useState(0);
+  const selectedPairs = useMemo(() => shuffle(wordPairs).slice(0, 8), [gameKey]);
 
   const gameOverAnimation = {
     initial: { opacity: 0, y: -20 },
@@ -63,6 +73,8 @@ const MemoryGame = () => {
     setTimer(90);
     setIsGameOver(false);
     setShowWinMessage(false);
+    setGameKey(prev => prev + 1);
+    trackGameStart();
   };
 
   useEffect(() => {
@@ -104,6 +116,10 @@ const MemoryGame = () => {
     }
 
     playSound(flipSound);
+    const clickedCard = cards.find((card) => card.id === id);
+    if (clickedCard) {
+      trackCardFlip(id, clickedCard.type);
+    }
     const newFlippedCards = [...flippedCards, id];
     setFlippedCards(newFlippedCards);
 
@@ -130,6 +146,7 @@ const MemoryGame = () => {
 
         if (isMatch) {
           playSound(successSound);
+          trackCardMatch(matches + 1, score + 100);
           setCards((prevCards) =>
             prevCards.map((card) =>
               card.id === firstId || card.id === secondId
@@ -141,6 +158,7 @@ const MemoryGame = () => {
             const newMatches = prev + 1;
             if (newMatches === selectedPairs.length) {
               playSound(celebrationSound);
+              trackGameWon(score, 90 - timer);
               setShowWinMessage(true);
               toast("¡Felicitaciones! You've completed the game! 🎉");
             }
@@ -149,6 +167,7 @@ const MemoryGame = () => {
           setScore((prev) => prev + 100);
         } else {
           playSound(errorSound);
+          trackIncorrectMatch(Math.max(score - 10, 0));
           setScore((prev) => Math.max(prev - 10, 0));
           setTimeout(() => {
             setCards((prevCards) =>

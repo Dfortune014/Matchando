@@ -1,6 +1,7 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import React from "react";
+import { Button } from "./ui/button";
+import { trackNewGameClick } from "../utils/analytics";
+import { motion } from "framer-motion";
 
 interface GameFooterProps {
   onRestart: () => void;
@@ -8,15 +9,25 @@ interface GameFooterProps {
   totalPairs: number;
 }
 
-const GameFooter: React.FC<GameFooterProps> = ({ onRestart, matches, totalPairs }) => {
+const GameFooter: React.FC<GameFooterProps> = ({
+  onRestart,
+  matches,
+  totalPairs,
+}) => {
   const messages = [
     "The quest begins! 🗡️",
     "Your magic grows stronger! ✨",
     "Almost there, brave one! 🛡️",
-    "Victory awaits! 🏆"
+    "Victory awaits! 🏆",
   ];
 
-  const currentMessage = messages[Math.min(Math.floor((matches / totalPairs) * messages.length), messages.length - 1)];
+  const currentMessage =
+    messages[
+      Math.min(
+        Math.floor((matches / totalPairs) * messages.length),
+        messages.length - 1
+      )
+    ];
 
   return (
     <motion.div
@@ -25,9 +36,14 @@ const GameFooter: React.FC<GameFooterProps> = ({ onRestart, matches, totalPairs 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <p className="text-lg text-primary-foreground/80 mb-4">{currentMessage}</p>
+      <p className="text-lg text-primary-foreground/80 mb-4">
+        {currentMessage}
+      </p>
       <Button
-        onClick={onRestart}
+        onClick={() => {
+          trackNewGameClick();
+          onRestart();
+        }}
         className="bg-primary hover:bg-primary/80 text-white px-8 py-2 rounded-lg transition-colors border border-primary/20"
       >
         New Game
