@@ -1,68 +1,70 @@
 // Analytics utility for tracking game events
-import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-
-// Ensure all event tracking functions handle async properly
-async function sendToAWS(event: string, properties?: Record<string, any>) {
-  await trackEvent(event, properties);
-}
+import { LAMBDA_CONFIG } from "./lambdaConfig";
 
 interface GameEvent {
-  event: string;
-  properties?: Record<string, any>;
+  eventType: string;
+  data: {
+    timestamp: string;
+    [key: string]: any;
+  };
 }
 
-const eventBridgeClient = new EventBridgeClient({ 
-  region: import.meta.env.VITE_AWS_REGION,
-  credentials: {
-    accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
-    secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY
-  }
-});
+export const sendToAWS = async (
+  event: string,
+  properties?: Record<string, any>
+) => {
+  await trackEvent(event, properties);
+};
 
-export const trackEvent = async (event: string, properties?: Record<string, any>) => {
+const trackEvent = async (event: string, properties?: Record<string, any>) => {
   try {
-    const params = {
-      Entries: [
-        {
-          Source: 'com.memorygame',
-          DetailType: event,
-          Detail: JSON.stringify({
-            timestamp: new Date().toISOString(),
-            ...properties
-          }),
-          EventBusName: 'default'
-        }
-      ]
+    const payload = {
+      eventType: event,
+      data: {
+        timestamp: new Date().toISOString(),
+        ...properties
+      }
     };
 
-    const command = new PutEventsCommand(params);
-    await eventBridgeClient.send(command);
-    
+    const response = await fetch(LAMBDA_CONFIG.FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
     // Also log locally for debugging
-    console.log('Track Event:', { event, properties });
+    console.log("Track Event:", payload);
   } catch (error) {
-    console.error('Failed to send event to AWS:', error);
+    console.error("Failed to send event to AWS:", error);
   }
 };
 
 // Game Session Events
-export const trackGameStart = () => sendToAWS('game_started');
-export const trackGameOver = (score: number, timeRemaining: number) => 
-  sendToAWS('game_over', { score, timeRemaining });
-export const trackGameWon = (score: number, timeElapsed: number) => 
-  sendToAWS('game_won', { score, timeElapsed });
+export const trackGameStart = () => sendToAWS("game_started");
+export const trackGameOver = (score: number, timeRemaining: number) =>
+  sendToAWS("game_over", { score, timeRemaining });
+export const trackGameWon = (score: number, timeElapsed: number) =>
+  sendToAWS("game_won", { score, timeElapsed });
 
 // Card Interaction Events
-export const trackCardFlip = (cardId: number, cardType: string) => 
-  sendToAWS('card_flipped', { cardId, cardType });
-export const trackCardMatch = (matchNumber: number, score: number) => 
-  sendToAWS('cards_matched', { matchNumber, score });
-export const trackIncorrectMatch = (currentScore: number) => 
-  sendToAWS('incorrect_match', { currentScore });
+export const trackCardFlip = (cardId: number, cardType: string) =>
+  sendToAWS("card_flipped", { cardId, cardType });
+export const trackCardMatch = (matchNumber: number, score: number) =>
+  sendToAWS("cards_matched", { matchNumber, score });
+export const trackIncorrectMatch = (currentScore: number) =>
+  sendToAWS("incorrect_match", { currentScore });
 
 // Sound Events
-export const trackSoundPlayed = (soundType: string) => 
-  sendToAWS('sound_played', { soundType });
+export const trackSoundPlayed = (soundType: string) =>
+  sendToAWS("sound_played", { soundType });
 
 // UI Events
-export const trackNewGameClick = () => sendToAWS('new_game_clicked');
+export const trackNewGameClick = () => sendToAWS("new_game_clicked");

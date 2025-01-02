@@ -11,15 +11,16 @@ import errorSound from "../assets/sounds/error.mp3";
 import celebrationSound from "../assets/sounds/celebration.mp3";
 import { playSound } from "../utils/soundUtils";
 import wordPairs from "../wordPairs.json";
-import { 
-  trackGameStart, 
-  trackGameOver, 
-  trackGameWon, 
-  trackCardFlip, 
-  trackCardMatch, 
+import {
+  trackGameStart,
+  trackGameOver,
+  trackGameWon,
+  trackCardFlip,
+  trackCardMatch,
   trackIncorrectMatch,
-  trackNewGameClick 
+  trackNewGameClick,
 } from "../utils/analytics";
+import { sendMatchEvent } from "../utils/api";
 
 export interface CardType {
   id: number;
@@ -40,7 +41,10 @@ const MemoryGame = () => {
   const [showWinMessage, setShowWinMessage] = useState(false);
 
   const [gameKey, setGameKey] = useState(0);
-  const selectedPairs = useMemo(() => shuffle(wordPairs).slice(0, 8), [gameKey]);
+  const selectedPairs = useMemo(
+    () => shuffle(wordPairs).slice(0, 8),
+    [gameKey]
+  );
 
   const gameOverAnimation = {
     initial: { opacity: 0, y: -20 },
@@ -49,8 +53,11 @@ const MemoryGame = () => {
   };
 
   const initializeGame = () => {
+    console.log("Selected pairs for new game:", selectedPairs);
     const gameCards: CardType[] = [];
+
     selectedPairs.forEach((pair, index) => {
+      console.log(`Creating cards for pair ${index}:`, pair);
       gameCards.push({
         id: index * 2,
         content: pair.spanish,
@@ -66,14 +73,17 @@ const MemoryGame = () => {
         type: "english",
       });
     });
-    setCards(shuffle(gameCards));
+
+    const shuffledCards = shuffle(gameCards);
+    console.log("Final shuffled cards:", shuffledCards);
+
+    setCards(shuffledCards);
     setFlippedCards([]);
     setMatches(0);
     setScore(100);
     setTimer(90);
     setIsGameOver(false);
     setShowWinMessage(false);
-    setGameKey(prev => prev + 1);
     trackGameStart();
   };
 
@@ -103,6 +113,47 @@ const MemoryGame = () => {
       setIsGameOver(true);
     }
   }, [score]);
+
+  const debugMatch = (firstCard: CardType, secondCard: CardType) => {
+    console.group("Match Debug");
+    console.log("First Card:", {
+      content: firstCard.content,
+      type: firstCard.type,
+    });
+    console.log("Second Card:", {
+      content: secondCard.content,
+      type: secondCard.type,
+    });
+
+    // Check if either card's content exists in any pair
+    const firstCardExists = selectedPairs.some(
+      (pair) =>
+        pair.spanish === firstCard.content || pair.english === firstCard.content
+    );
+    const secondCardExists = selectedPairs.some(
+      (pair) =>
+        pair.spanish === secondCard.content ||
+        pair.english === secondCard.content
+    );
+
+    console.log("First card exists in pairs:", firstCardExists);
+    console.log("Second card exists in pairs:", secondCardExists);
+
+    if (!firstCardExists || !secondCardExists) {
+      console.warn("One or both cards are not in the selected pairs!");
+      console.log("Available pairs:", selectedPairs);
+    }
+
+    const matchingPair = selectedPairs.find(
+      (pair) =>
+        (firstCard.content === pair.spanish &&
+          secondCard.content === pair.english) ||
+        (firstCard.content === pair.english &&
+          secondCard.content === pair.spanish)
+    );
+    console.log("Matching Pair Found:", matchingPair);
+    console.groupEnd();
+  };
 
   const handleCardClick = (id: number) => {
     if (isGameOver || showWinMessage) return;
@@ -136,13 +187,26 @@ const MemoryGame = () => {
       const secondCard = cards.find((card) => card.id === secondId);
 
       if (firstCard && secondCard) {
-        const isMatch = selectedPairs.some(
-          (pair) =>
-            (firstCard.content === pair.spanish &&
-              secondCard.content === pair.english) ||
-            (firstCard.content === pair.english &&
-              secondCard.content === pair.spanish)
-        );
+        debugMatch(firstCard, secondCard);
+
+        // Check if it's a valid match
+        const isMatch =
+          // Check if first card is Spanish and second is English
+          (firstCard.type === "spanish" &&
+            secondCard.type === "english" &&
+            selectedPairs.some(
+              (pair) =>
+                pair.spanish === firstCard.content &&
+                pair.english === secondCard.content
+            )) ||
+          // Check if first card is English and second is Spanish
+          (firstCard.type === "english" &&
+            secondCard.type === "spanish" &&
+            selectedPairs.some(
+              (pair) =>
+                pair.english === firstCard.content &&
+                pair.spanish === secondCard.content
+            ));
 
         if (isMatch) {
           playSound(successSound);
@@ -165,6 +229,19 @@ const MemoryGame = () => {
             return newMatches;
           });
           setScore((prev) => prev + 100);
+
+          // Make the setTimeout callback async
+          setTimeout(async () => {
+            try {
+              await sendMatchEvent({
+                matchNumber: matches + 1,
+                score: score + 100,
+                timeElapsed: 90 - timer,
+              });
+            } catch (error) {
+              console.error("Error sending match event:", error);
+            }
+          }, 100);
         } else {
           playSound(errorSound);
           trackIncorrectMatch(Math.max(score - 10, 0));
@@ -179,9 +256,12 @@ const MemoryGame = () => {
             );
           }, 1000);
         }
-        setTimeout(() => setIsChecking(false), 1000);
+
+        setTimeout(() => {
+          setIsChecking(false);
+          setFlippedCards([]);
+        }, 1000);
       }
-      setFlippedCards([]);
     }
   };
 
